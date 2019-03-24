@@ -1,3 +1,4 @@
+import constraint.CanMatchSamePersonEveryThreeYears;
 import constraint.CannotMatchYourself;
 import constraint.IMatchConstraint;
 import exception.DuplicateName;
@@ -6,6 +7,7 @@ import matcher.IMatchAlgorithm;
 import matcher.MatchResult;
 import matcher.ShuffledListMatcher;
 import model.Person;
+import service.MatchResultTrackerService;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,12 +20,16 @@ public class SecretSanta {
 
     private List<IMatchConstraint> matchConstraints;
 
+    private MatchResultTrackerService resultTrackerService;
+
     SecretSanta(IMatchAlgorithm matcher,
                 List<Person> members,
-                List<IMatchConstraint> matchConstraints) {
+                List<IMatchConstraint> matchConstraints,
+                MatchResultTrackerService resultTrackerService) {
         this.matcher = matcher;
         this.members = members;
         this.matchConstraints = matchConstraints;
+        this.resultTrackerService = resultTrackerService;
     }
 
 
@@ -33,6 +39,9 @@ public class SecretSanta {
         List<MatchResult> matchResults = new ArrayList<>();
         try {
             matchResults = matcher.findMatches(members, matchConstraints);
+
+            resultTrackerService.updateMatches(matchResults);
+            resultTrackerService.incrementCurrentYear();
         } catch (MatchNotFound matchNotFound) {
             System.out.println(matchNotFound.getMessage());
         }
@@ -64,9 +73,16 @@ public class SecretSanta {
         Person G = new Person("G");
         List<Person> members = Arrays.asList(A, B, C, D, E, F, G);
 
+        // Setup secret-santa helper services
+        MatchResultTrackerService resultTrackerService = new MatchResultTrackerService();
+
         // Setup all constraints
         IMatchConstraint cannotMatchYourself = new CannotMatchYourself();
-        List<IMatchConstraint> constraints = Collections.singletonList(cannotMatchYourself);
+        IMatchConstraint canMatchSamePersonEveryThreeYears =
+                new CanMatchSamePersonEveryThreeYears(resultTrackerService);
+        List<IMatchConstraint> constraints = Arrays.asList(
+                cannotMatchYourself,
+                canMatchSamePersonEveryThreeYears);
 
         // Setup match algorithm
         IMatchAlgorithm matcher = new ShuffledListMatcher();
@@ -75,7 +91,7 @@ public class SecretSanta {
         System.out.println("Starting secret-santa matcher");
         System.out.println("Using match algorithm " + matcher.getClass().getName());
 
-        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints);
+        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints, resultTrackerService);
         List<MatchResult> matchResults = new ArrayList<>();
         for (int index = 0; index < 5; index++) {
             System.out.println("*******************");

@@ -7,6 +7,7 @@ import matcher.ShuffledListMatcher;
 import model.Person;
 import org.junit.Before;
 import org.junit.Test;
+import service.MatchResultTrackerService;
 import util.TestConstants;
 
 import java.util.*;
@@ -16,12 +17,15 @@ import static org.junit.Assert.assertEquals;
 
 public class UT_SecretSanta {
 
+    private MatchResultTrackerService trackerService;
+
     private IMatchAlgorithm matcher;
 
     private List<IMatchConstraint> constraints;
 
     @Before
     public void setUp() {
+        trackerService = new MatchResultTrackerService();
         matcher = new ShuffledListMatcher();
 
         constraints = Collections.singletonList(new CannotMatchYourself());
@@ -34,7 +38,7 @@ public class UT_SecretSanta {
         members.add(TestConstants.PERSON_A);
         members.add(TestConstants.PERSON_A);
 
-        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints);
+        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints, trackerService);
         secretSanta.getMatches();
     }
 
@@ -42,7 +46,7 @@ public class UT_SecretSanta {
     public void testWithOddNumberOfMembers() throws DuplicateName {
         // Arrange
         List<Person> members = TestConstants.oddMembers;
-        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints);
+        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints, trackerService);
 
         // Act
         List<MatchResult> matches = secretSanta.getMatches();
@@ -53,7 +57,7 @@ public class UT_SecretSanta {
     public void testWithEvenNumberOfMembers() throws DuplicateName {
         // Arrange
         List<Person> members = TestConstants.evenMembers;
-        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints);
+        SecretSanta secretSanta = new SecretSanta(matcher, members, constraints, trackerService);
 
         // Act
         List<MatchResult> matches = secretSanta.getMatches();
