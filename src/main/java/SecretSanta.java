@@ -1,4 +1,5 @@
 import constraint.CanMatchSamePersonEveryThreeYears;
+import constraint.CannotMatchWithFamilyMembers;
 import constraint.CannotMatchYourself;
 import constraint.IMatchConstraint;
 import exception.DuplicateName;
@@ -7,7 +8,9 @@ import matcher.IMatchAlgorithm;
 import matcher.MatchResult;
 import matcher.ShuffledListMatcher;
 import model.Person;
+import model.Relationship;
 import service.MatchResultTrackerService;
+import service.RelationshipService;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,16 +76,25 @@ public class SecretSanta {
         Person G = new Person("G");
         List<Person> members = Arrays.asList(A, B, C, D, E, F, G);
 
+        // Setup relationships
+        Set<Relationship> relations = new HashSet<>();
+        relations.add(new Relationship(A, E));
+        relations.add(new Relationship(F, E));
+
         // Setup secret-santa helper services
         MatchResultTrackerService resultTrackerService = new MatchResultTrackerService();
+        RelationshipService relationshipService = new RelationshipService(relations);
 
         // Setup all constraints
         IMatchConstraint cannotMatchYourself = new CannotMatchYourself();
         IMatchConstraint canMatchSamePersonEveryThreeYears =
                 new CanMatchSamePersonEveryThreeYears(resultTrackerService);
+        IMatchConstraint cannotMatchWithFamilyMembers =
+                new CannotMatchWithFamilyMembers(relationshipService);
         List<IMatchConstraint> constraints = Arrays.asList(
                 cannotMatchYourself,
-                canMatchSamePersonEveryThreeYears);
+                canMatchSamePersonEveryThreeYears,
+                cannotMatchWithFamilyMembers);
 
         // Setup match algorithm
         IMatchAlgorithm matcher = new ShuffledListMatcher();
@@ -90,6 +102,13 @@ public class SecretSanta {
         // Start the program
         System.out.println("Starting secret-santa matcher");
         System.out.println("Using match algorithm " + matcher.getClass().getName());
+
+        // Print the list of relationships
+        relations.forEach(r -> {
+            String primary = r.getPrimary().getName();
+            String secondary = r.getSecondary().getName();
+            System.out.println(String.format("%s is related to %s", primary, secondary));
+        });
 
         SecretSanta secretSanta = new SecretSanta(matcher, members, constraints, resultTrackerService);
         List<MatchResult> matchResults = new ArrayList<>();
