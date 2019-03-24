@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group 'com.srana'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+apply plugin: 'application'
+mainClassName = 'SecretSanta'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+    testCompile "org.mockito:mockito-core:2.+"
+}
+
+test {
+    useJUnit()
+    maxHeapSize = '1G'
+
+    afterTest { desc, result ->
+        logger.quiet "Running test ${desc.className}.${desc.name} : ${result.resultType}"
+    }
+}
